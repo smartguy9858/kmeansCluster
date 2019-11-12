@@ -1,0 +1,131 @@
+---
+title: "kmeans eample"
+author: "MGMT6770"
+date: "11/12/2019"
+output: 
+  html_document:
+    toc: true
+    number_sections: true
+---
+# Cluster analysis:  
+unsupervised learning
+
+This R markdown file runs an example of a kmeans cluster algorithm.
+The idea is to find an optimal number of clusters; this is typically
+done by comparing within-cluster variability to between-cluster
+variability
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(cluster)
+library(factoextra)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## get the data
+
+```{r readData}
+
+#df = read.csv('cars.csv')
+#head(df)
+
+dni3 <- dimnames(iris3)
+df <- data.frame(matrix(aperm(iris3, c(1,3,2)), ncol = 4,
+                        dimnames = list(NULL, sub(" L.",".Length",
+                                        sub(" W.",".Width", dni3[[2]])))),
+    Species = gl(3, 50, labels = sub("S", "s", sub("V", "v", dni3[[3]]))))
+all.equal(df, iris) # TRUE
+df = df[,-5] #take out the Species
+head(df)
+```
+
+Clean up the data set; no 'na' values
+```{r removeNA}
+df=na.omit(df)
+```
+
+As with the neural net, we don't want the result to depend on the units selected
+
+```{r}mid
+df = scale(df)
+head(df)
+```
+
+use functions *get_dist* and *fviz_dist* from package factoextra
+
+```{r}
+distance = get_dist(df)
+fviz_dist(distance, gradient=list(low='#00AFBB', mid='white', high='#FC4E07'))
+
+```
+
+## Compute kmeans clustering in R
+
+```{r kMeans2}
+k2 = kmeans(df, centers = 2,nstart=25)
+```
+
+
+visualize
+
+```{r}
+fviz_cluster(k2, data=df)
+```
+
+Multiple clusters...
+
+```{r}
+k3= kmeans(df, centers=3, nstart=25)
+k4= kmeans(df, centers=4, nstart=25)
+k5= kmeans(df, centers=5, nstart=25)
+```
+
+plots to compare
+
+```{r comparePlots}
+p1 = fviz_cluster(k2, geom='point', data =df) + ggtitle('k=2')
+p2 = fviz_cluster(k3, geom='point', data =df) + ggtitle('k=3')
+p3 = fviz_cluster(k4, geom='point', data =df) + ggtitle('k=4')
+p4 = fviz_cluster(k5, geom='point', data =df) + ggtitle('k=5')
+
+library(gridExtra)
+grid.arrange(p1, p2, p3, p4, nrow=2)
+```
+
+compute total within-cluster sum of squares  
+silhouette- best breakdown: maximize silhouette value
+
+```{r withinClusterPlot }
+was = function(k) {
+  kmeans(df, k, nstart=10)$tot.withinss 
+}
+
+# compute and plot for k=1 to k=10
+k.values=1:10
+
+# extract was for 2-10 clusters
+was.values = map_dbl(k.values, was)
+print('silhouette values: ')
+for (i in 1:10) print(paste(i," ", was.values[i]," ", was.values[i]/was.values[1]*100,"%"))
+
+plot(k.values, was.values, type='b', pch=19, frame=FALSE, 
+     xlab = 'number of clusters', ylab='total within-clusters SS')
+```
+
+
+within SS
+
+```{r}
+fviz_nbclust(df, kmeans, method = 'wss')
+```
+
+
+## final result
+
+```{r}
+final = kmeans(df,4, nstart=50)
+fviz_cluster(final, geom='point', data =df) + ggtitle('optim clusters')
+```
+
+Find the 50 most likely transactions to investigate?
