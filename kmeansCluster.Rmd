@@ -31,12 +31,12 @@ knitr::opts_chunk$set(echo = TRUE)
 #head(df)
 
 dni3 <- dimnames(iris3)
-df <- data.frame(matrix(aperm(iris3, c(1,3,2)), ncol = 4,
+df_all <- data.frame(matrix(aperm(iris3, c(1,3,2)), ncol = 4,
                         dimnames = list(NULL, sub(" L.",".Length",
                                         sub(" W.",".Width", dni3[[2]])))),
     Species = gl(3, 50, labels = sub("S", "s", sub("V", "v", dni3[[3]]))))
-all.equal(df, iris) # TRUE
-df = df[,-5] #take out the Species
+all.equal(df_all, iris) # TRUE
+df = df_all[,-5] #take out the Species
 head(df)
 ```
 
@@ -124,8 +124,24 @@ fviz_nbclust(df, kmeans, method = 'wss')
 ## final result
 
 ```{r}
-final = kmeans(df,4, nstart=50)
+final = kmeans(df,3, nstart=50)
 fviz_cluster(final, geom='point', data =df) + ggtitle('optim clusters')
 ```
+
+print cluster results:
+
+```{r}
+nObs = length(df[,1])
+for (i in 1:nObs){
+  print(paste(i, ' ', dni3[[3]][final$cluster[i]], df_all[i,5]))
+}
+
+xtabs(~dni3[[3]][final$cluster] + df_all[,5])
+```
+
+
+
+
+
 
 Find the 50 most likely transactions to investigate?
