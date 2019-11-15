@@ -14,7 +14,7 @@ This R markdown file runs an example of a kmeans cluster algorithm.
 The idea is to find an optimal number of clusters; this is typically
 done by comparing within-cluster variability to between-cluster
 variability
-
+ 
 
 ```{r setup, include=FALSE}
 library(tidyverse)
