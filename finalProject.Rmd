@@ -18,12 +18,14 @@ library(tidyverse)
 ```
 
 # Unsupervised learning: cluster analysis
+problem statiement: given a database of just over 400,000 transactions, each labeled as 'ok', 'fraud', or 'unk' use a machine learning technique to identify 50 or so transactions that *may* by fraudulent
 
 ```{r dataSets, echo=FALSE, include=FALSE}
 data() # to see all the data sets available
 ```
 
-## load the sales data set
+## load the sales data set  
+notice that a variable was added: price per item
 
 ```{r}
 data(sales)
@@ -36,7 +38,7 @@ head(salesDF)
 
 
 This package includes functions and data accompanying the book
-``Data Mining with R, learning with case studies'' by Luis Torgo, CRC Press 2010
+*Data Mining with R, learning with case studies* by Luis Torgo, CRC Press 2010
 
 The sales data set consists of sale transaction reports.  there are just over 400,000 transactions.  The entries are 
 
@@ -51,8 +53,8 @@ Insp    | categorical variable: 'ok', 'fraud', 'unkn'
 Only a small percentage of the transactions have been verified as either 'ok' or 'fraud.' 
 The purpose of the study is to Use cluser analysis to identify the top 50 'unkn' transactions to be investigated for possible fraud
 
-## Next step.... 
-look at the data
+## Construct data set with 'known' transactions
+This all transactions that are known to be either 'ok' or 'fraud,' look at the data
 
 ```{r}
 fraudData = filter(salesDF, Insp=='fraud')
@@ -61,7 +63,8 @@ fraud_ok = rbind(fraudData, okData)
 
 ```
 
-look at a boxplot
+### boxplots
+notice that the range of data values is so large that log-transform was used
 
 ```{r}
 nFraud = length(fraudData$Val)
@@ -89,6 +92,7 @@ grid()
 
 ```
 
+as may be expected the variability on fraudlent transactions is greater than that of the legit transactions
 
 ```{r}
 
@@ -98,6 +102,10 @@ grid()
 
 ```
 
+boxplot shows little difference between the 'ok' and 'fraud' transactions.  Larger orders could represent more of the fraudulent kind?
+
+## set up data set for clustering; 
+This assumes that the variables are numeric, not categorical
 
 ```{r}
 fraud_okLog = fraud_ok
@@ -110,7 +118,7 @@ df = df2
 ```
 
 
-
+##  Try a few clusters  
 Multiple clusters...
 
 ```{r}
@@ -132,6 +140,8 @@ library(gridExtra)
 grid.arrange(p1, p2, p3, p4, nrow=2)
 ```
 
+## How many clusters?   
+look at the within cluster variability.   
 
 ```{r withinClusterPlot }
 was = function(k) {
@@ -151,12 +161,13 @@ plot(k.values, was.values, type='b', pch=19, frame=FALSE,
 grid()
 ```
 
-
+From this plot it appears that 6 clusters is appropriate.. 
 
 ## final result
+larger 'nstart' means better chance of finding a _global_ solution
 
 ```{r}
-final = kmeans(df,6, nstart=50)
+final = kmeans(df,6, nstart=100)
 fviz_cluster(final, geom='point', data = df) + ggtitle('optimum clusters')
 ```
 
