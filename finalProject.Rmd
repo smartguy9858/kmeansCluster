@@ -30,7 +30,7 @@ notice that a variable was added: price per item
 ```{r}
 data(sales)
 salesDF = na.omit(sales)
-salesDF$perItem = salesDF$Val/salesDF$Quant
+salesDF$perItem = salesDF$Val/(salesDF$Quant+1)
 salesDF$Quant = as.numeric(salesDF$Quant)
 
 head(salesDF)
@@ -111,7 +111,7 @@ This assumes that the variables are numeric, not categorical
 fraud_okLog = fraud_ok
 fraud_okLog$Quant = log10(fraud_ok$Quant)
 fraud_okLog$Val = log10(fraud_ok$Val)
-fraud_okLog$Val = log10(fraud_ok$perItem)
+fraud_okLog$perItem = log10(fraud_ok$perItem)
 df = fraud_okLog[,c(3,4,6)]
 df2 = scale(fraud_ok[,c(3,4,6)])
 df = df2
@@ -122,10 +122,10 @@ df = df2
 Multiple clusters...
 
 ```{r}
-k2 =kmeans(df, centers=3, nstart=20)
-k3= kmeans(df, centers=4, nstart=20)
-k4= kmeans(df, centers=5, nstart=20)
-k5= kmeans(df, centers=6, nstart=20)
+k2 =kmeans(df, centers=3, nstart=25)
+k3= kmeans(df, centers=4, nstart=25)
+k4= kmeans(df, centers=5, nstart=25)
+k5= kmeans(df, centers=6, nstart=25)
 ```
 
 plots to compare
@@ -173,18 +173,39 @@ fviz_cluster(final, geom='point', data = df) + ggtitle('optimum clusters')
 
 print cluster results:
 
-```{r}
+```{r echo = FALSE}
 nObs = length(df[,1])
-for (i in 1:6){
+for (i in unique(final$cluster)){
   print(paste('Cluster ',i))
   clusterIndex = which(final$cluster==i)
   fraudCount = length(which(fraud_ok[clusterIndex,5] == 'fraud'))
   okCount = length(which(fraud_ok[clusterIndex,5]=='ok'))
   print(paste('fraud = ', fraudCount, ' ok = ', okCount))
+  print(' Cluster mean point')
   print(paste('fraud = ', round(fraudCount/(fraudCount+okCount)*100),'%'))
+  
+  if(okCount ==0) {
+    print(round(final$centers[i,],2))
+  }
+  
   print('-------')
 }
 
 ```
 
+User centers of the 'all fraud' clusters to find transactions near these 
+
+```{r echo=FALSE}
+sortIndexQ = sort(fraud_ok$Quant, index.return=TRUE, decreasing = TRUE)
+print('highest quantity sales')
+print('Person ID      quantity    tyep')
+for (i in 1:20) print(paste(fraud_ok$ID[sortIndexQ$ix][i], fraud_ok$Quant[sortIndexQ$ix][i], fraud_ok$Insp[sortIndexQ$ix][i]))
+#print(fraud_ok$ID[sortIndex$ix][1:20])
+sortIndexV = sort(fraud_ok$perItem, index.return=TRUE, decreasing = TRUE)
+print('------------------------')
+print('highest price items')
+print('Person ID    item price    transaction')
+for (i in 1:20) print(paste(fraud_ok$ID[sortIndexV$ix][i],"   ",round(10^(fraud_ok$perItem[sortIndexV$ix][i]),4), fraud_ok$Insp[sortIndexV$ix][i]))
+
+```
 
