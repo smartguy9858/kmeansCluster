@@ -30,8 +30,9 @@ notice that a variable was added: price per item
 ```{r}
 data(sales)
 salesDF = na.omit(sales)
-salesDF$perItem = salesDF$Val/(salesDF$Quant+1)
+salesDF$perItem = salesDF$Val/salesDF$Quant
 salesDF$Quant = as.numeric(salesDF$Quant)
+salesDF$Val = as.numeric(salesDF$Val)
 
 head(salesDF)
 ```
@@ -163,7 +164,7 @@ grid()
 
 From this plot it appears that 6 clusters is appropriate.. 
 
-## final result
+## final result: clusters
 larger 'nstart' means better chance of finding a _global_ solution
 
 ```{r}
@@ -171,7 +172,7 @@ final = kmeans(df,6, nstart=100)
 fviz_cluster(final, geom='point', data = df) + ggtitle('optimum clusters')
 ```
 
-print cluster results:
+### print cluster results:
 
 ```{r echo = FALSE}
 nObs = length(df[,1])
@@ -196,16 +197,18 @@ for (i in unique(final$cluster)){
 User centers of the 'all fraud' clusters to find transactions near these 
 
 ```{r echo=FALSE}
-sortIndexQ = sort(fraud_ok$Quant, index.return=TRUE, decreasing = TRUE)
+sortIndexQ = sort(fraud_okLog$Quant, index.return=TRUE, decreasing = TRUE)
 print('highest quantity sales')
-print('Person ID      quantity    tyep')
-for (i in 1:20) print(paste(fraud_ok$ID[sortIndexQ$ix][i], fraud_ok$Quant[sortIndexQ$ix][i], fraud_ok$Insp[sortIndexQ$ix][i]))
+print('Person ID      quantity     type')
+for (i in 1:20) print(paste(fraud_okLog$ID[sortIndexQ$ix[i]], "      ",round(10^fraud_okLog$Quant[sortIndexQ$ix[i]]),"   ", fraud_okLog$Insp[sortIndexQ$ix[i]]))
 #print(fraud_ok$ID[sortIndex$ix][1:20])
-sortIndexV = sort(fraud_ok$perItem, index.return=TRUE, decreasing = TRUE)
+sortIndexV = sort(fraud_okLog$perItem, index.return=TRUE, decreasing = TRUE)
 print('------------------------')
 print('highest price items')
 print('Person ID    item price    transaction')
-for (i in 1:20) print(paste(fraud_ok$ID[sortIndexV$ix][i],"   ",round(10^(fraud_ok$perItem[sortIndexV$ix][i]),4), fraud_ok$Insp[sortIndexV$ix][i]))
+for (i in 1:20) print(paste(fraud_okLog$ID[sortIndexV$ix][i],"   ",round(10^(fraud_okLog$perItem[sortIndexV$ix[i]]),4), "       ", fraud_okLog$Insp[sortIndexV$ix[i]]))
 
 ```
 
+## Find possible fraudlent transactions
+find transactions in the data frame Insp == 'unk' that are closest to the 'fraud' clusters
